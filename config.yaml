@@ -1,0 +1,42 @@
+binance:
+  endpoint: "https://api.binance.com"
+
+
+models:
+  resnet:
+    symbols:
+        - "DOGEUSDT"
+        - "AVAXUSDT"
+        - "SOLUSDT"
+        - "SHIBUSDT"
+        - "EURUSDT"
+        - "GBPUSDT"
+        - "ETCETH"
+        - "ETCBTC"
+        - "MKRUSDT"
+        - "MKRBTC"
+        - "IOTAUSDT"
+        - "ADAUSDT"
+        - "XLMUSDT"
+        - "TRXUSDT"
+        - "XMRUSDT"
+        - "EOSUSDT"
+        - "DOGEGBP"
+        - "BTCEUR"
+        - "BTCGBP"
+        - "BTCUSDT"
+
+    features:
+      - "open"
+      - "high"
+      - "low"
+      - "close"
+      - "volume"
+      - "quote_asset_volume"
+      - "number_of_trades"
+      - "taker_buy_base_asset_volume"
+      - "taker_buy_quote_asset_volume"
+
+    model_class: 'BSM4'
+    model_file: 'BSM4.torch'
+    window_size: 512
