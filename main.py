@@ -12,7 +12,7 @@ from datastructures.tickerstream import TickerStream
 from datastructures.ticketdata import TickerData
 from datastructures.trading import Trading
 from helpers import prepare_data
-from ml.models.BSM import BSM4
+from ml.models.BSM import ResNetBSM4
 
 # Configure logging
 # TODO also log to file
@@ -49,7 +49,7 @@ def run_prediction_loop():
     trading_engine = Trading(cfg, C_thresholds, test_logger)
     API = BinanceAPI(config=cfg["binance"])
 
-    net = BSM4(
+    net = ResNetBSM4(
         n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
         n_outputs=len(cfg["models"]["resnet"]["symbols"]),
     )
