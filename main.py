@@ -52,7 +52,7 @@ def run_prediction_loop():
     net = ResNetBSM4(
         n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
         n_outputs=len(cfg["models"]["resnet"]["symbols"]),
-        features=32,
+        filters=32,
         blocks=3,
     )
     if torch.cuda.is_available():
