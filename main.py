@@ -57,7 +57,7 @@ def run_prediction_loop():
         net.load_state_dict(torch.load("ml/models/BSM4.pth"))
     else:
         net.load_state_dict(
-            torch.load("ml/models/BSM4.pth"), map_location=torch.device("cpu")
+            torch.load("ml/models/BSM4.pth", map_location=torch.device("cpu"))
         )
 
     net.eval()
