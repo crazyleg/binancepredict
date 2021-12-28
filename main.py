@@ -53,7 +53,13 @@ def run_prediction_loop():
         n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
         n_outputs=len(cfg["models"]["resnet"]["symbols"]),
     )
-    net.load_state_dict(torch.load("ml/models/BSM4.pth"))
+    if torch.cuda.is_available():
+        net.load_state_dict(torch.load("ml/models/BSM4.pth"))
+    else:
+        net.load_state_dict(
+            torch.load("ml/models/BSM4.pth"), map_location=torch.device("cpu")
+        )
+
     net.eval()
 
     while True:
