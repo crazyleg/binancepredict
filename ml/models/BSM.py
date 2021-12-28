@@ -8,10 +8,16 @@ from .resnet1d import ResNet1D
 
 
 class ResNetBSM4(nn.Module):
-    def __init__(self, n_features, n_outputs):
+    def __init__(
+        self,
+        n_features,
+        n_outputs,
+        filters=64,
+        blocks=6,
+    ):
         super(ResNetBSM4, self).__init__()
 
-        self.net1 = ResNet1D(n_features, 64, 3, 1, 1, 6, n_outputs)
+        self.net1 = ResNet1D(n_features, filters, 3, 1, 1, blocks, n_outputs)
         # self.net2 = ResNet1D(98, 64, 3, 1 , 1, 6, 14)
         self.flat = nn.Flatten()
         self.fcn = nn.Linear(n_outputs, n_outputs)
