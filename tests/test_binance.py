@@ -10,13 +10,6 @@ with open("config.yaml", "r") as ymlfile:
 
 
 @vcr.use_cassette()
-def test_getting_inference_data():
-    api = BinanceAPI({"endpoint": "https://api.binance.com"})
-    result = api.get_inference_data(cfg["models"]["resnet"]["symbols"], interval="1m")
-    # todo add asserts
-
-
-@vcr.use_cassette()
 def test_getting_inference_data_async():
     api = BinanceAPI({"endpoint": "https://api.binance.com"})
     result = api.get_interence_data_async(

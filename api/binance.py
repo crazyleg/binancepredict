@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from asyncio.tasks import sleep
 from collections import ChainMap
 from datetime import datetime
 from typing import Mapping
@@ -44,9 +45,14 @@ class BinanceAPI:
         async with session.get(
             self.endpoint + "/api/v3/klines", params=parameters
         ) as response:
-            tickers = [TickerData(symbol, interval, *x) for x in await response.json()]
-            stream = TickerStream(tickers, symbol, interval)
-            last_timestamp = stream.max_timestamp()
+            if response.status == 200:
+                tickers = [
+                    TickerData(symbol, interval, *x) for x in await response.json()
+                ]
+                stream = TickerStream(tickers, symbol, interval)
+                last_timestamp = stream.max_timestamp()
+            else:
+                raise ConnectionError
 
         logging.debug(
             f"get {len(tickers)} ticks of {symbol} with delay of {time.time()-last_timestamp/1000}"
@@ -54,15 +60,19 @@ class BinanceAPI:
         return {symbol: stream}, last_timestamp
 
     async def start_async_fetching(self, symbols, interval, limit=1000):
-        async with aiohttp.ClientSession() as session:
-            results = await asyncio.gather(
-                *[
-                    self.get_ticker_data_async(session, s, interval, limit)
-                    for s in symbols
-                ]
-            )
-        results_data = dict(ChainMap(*[r for r, t in results]))
-        return results_data, np.array([t for r, t in results]).max()
+        try:
+            async with aiohttp.ClientSession() as session:
+                results = await asyncio.gather(
+                    *[
+                        self.get_ticker_data_async(session, s, interval, limit)
+                        for s in symbols
+                    ]
+                )
+            results_data = dict(ChainMap(*[r for r, t in results]))
+            return results_data, np.array([t for r, t in results]).max()
+        except:
+            logging.warning("cooling off API")
+            sleep.wait(60)
 
     def get_interence_data_async(
         self, symbols, interval, limit=1000

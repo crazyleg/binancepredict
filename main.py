@@ -5,6 +5,7 @@ import torch
 import yaml
 from logstash_async.handler import AsynchronousLogstashHandler
 from prettylog import basic_config
+from sklearn.linear_model import LinearRegression
 
 from api.binance import BinanceAPI
 from datastructures.tickerstream import TickerStream
@@ -31,31 +32,29 @@ with open("config.yaml", "r") as ymlfile:
 # get data with API
 
 
-API = BinanceAPI(config=cfg["binance"])
-
-net = BSM4(
-    n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,
-    n_outputs=len(cfg["models"]["resnet"]["symbols"]),
-)
-net.load_state_dict(torch.load("ml/models/BSM4.pth"))
-net.eval()
-
-CONTEXT = []
-UPDATE = []
-
 # TODO blocker! delays have to be normalized
 # TODO blocker! asses the losses of the 1000-512 stamps and log it!!!
 # TODO log predictions and operations
 # TODO log trading operations - currency, open_time, buy or sell
 # TODO log profits - monitor 15 min, close operation and log profits
 # TODO Dataclass for thresholds
-# TODO 
+# TODO
+
 
 def run_prediction_loop():
     # LOG time - time to wait, getting the currency prices, log prices,
     # TODO check for maxtimestamp
     thresholds = pd.read_pickle("ml/models/thresholds.pkl")
-    trading_engine = Trading(cfg, thresholds, test_logger)
+    C_thresholds = pd.read_pickle("ml/models/C_thresholds.pkl")
+    trading_engine = Trading(cfg, C_thresholds, test_logger)
+    API = BinanceAPI(config=cfg["binance"])
+
+    net = BSM4(
+        n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
+        n_outputs=len(cfg["models"]["resnet"]["symbols"]),
+    )
+    net.load_state_dict(torch.load("ml/models/BSM4.pth"))
+    net.eval()
 
     while True:
         API.wait_for_1m_tick()
@@ -64,14 +63,22 @@ def run_prediction_loop():
             symbols=cfg["models"]["resnet"]["symbols"], interval="1m"
         )
 
-        data_for_inference = prepare_data(cfg, data)
+        data_for_inference, data_for_lr, returns = prepare_data(cfg, data)
 
-        data_for_inference = torch.Tensor(data_for_inference)[
-            :, -cfg["models"]["resnet"]["window_size"] :
-        ].unsqueeze(0)
-        # logging.info("")
+        data_for_inference = torch.Tensor(data_for_inference).unsqueeze(0)
+
         with torch.no_grad():
             results = net(data_for_inference)
+            results_for_lr = net(torch.Tensor(data_for_lr))
+
+        # TODO as a features for LR I can also add last 15m returns (not future)
+        # should be also good. But then maybe swapping LR to something non-linear should also help.
+        # Also things like volume could be of use for LR.
+
+        # TODO add a second trigger some conservative - threshold will be a quantile of historical predictions
+
+        reg = LinearRegression().fit(results_for_lr, returns)
+        results = reg.predict(results)
 
         trading_engine.update_status(max_timestamp, data, results)
         logging.info("cycle finished")

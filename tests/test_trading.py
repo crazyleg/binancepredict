@@ -17,7 +17,7 @@ with open("config.yaml", "r") as ymlfile:
 def test_add_trade():
     trades = Trading(cfg, thresholds, test_logger)
     test_trade = Trade(
-        timestamp=time,
+        timestamp=time(),
         currency="ETCBTC",
         entry_price=1,
         type=Operation.BUY,
@@ -31,10 +31,11 @@ def test_add_trade():
 def test_match_trades():
     trades = Trading(cfg, thresholds, test_logger)
     test_trade = Trade(
-        timestamp=time,
+        timestamp=100,
         currency="ETCBTC",
         entry_price=1,
         type=Operation.BUY,
         trigger=TriggerType.AVG,
     )
     trades.make_trade(test_trade)
+    trades.close_trades(1000, spot_prices={"ETCBTC": []})
