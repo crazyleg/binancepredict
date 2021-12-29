@@ -19,6 +19,7 @@ class TriggerType(Enum):
     LR = 2
     LRx3 = 3
     LRx4 = 4
+    Elastic = 5
 
 
 @dataclass
@@ -90,13 +91,27 @@ class Trading:
         # log per-currency and total profits
         # check for double trades!
 
+        self.just_thresholds = pd.DataFrame(
+            [
+                {"pair": c, "buy_thr": 0.002, "sell_thr": 0.002}
+                for c in self.cfg["models"]["resnet"]["symbols"]
+            ]
+        )
+
         for thr_type, thrs in zip(
-            [TriggerType.NN, TriggerType.LR, TriggerType.LRx3, TriggerType.LRx6],
+            [
+                TriggerType.NN,
+                TriggerType.LR,
+                TriggerType.LRx3,
+                TriggerType.LRx4,
+                TriggerType.Elastic,
+            ],
             [
                 self.C_thresholds,
                 self.lr_thresholds,
                 self.lr_thresholds,
                 self.lr_thresholds,
+                self.just_thresholds,
             ],
         ):
             tmp_thrs = thrs.copy()
