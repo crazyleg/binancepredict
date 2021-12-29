@@ -21,6 +21,8 @@ class TriggerType(Enum):
     LRx4 = 4
     Elastic = 5
     LRx4Manual = 6
+    Elasticx10 = 7
+    LRx4Manualx10 = 8
 
 
 @dataclass
@@ -106,6 +108,13 @@ class Trading:
             ]
         )
 
+        self.just_thresholds10 = pd.DataFrame(
+            [
+                {"pair": c, "buy_thr": 0.01, "sell_thr": -0.01}
+                for c in self.cfg["models"]["resnet"]["symbols"]
+            ]
+        )
+
         for thr_type, thrs in zip(
             [
                 TriggerType.NN,
@@ -114,6 +123,8 @@ class Trading:
                 TriggerType.LRx4,
                 TriggerType.Elastic,
                 TriggerType.LRx4Manual,
+                TriggerType.Elasticx10,
+                TriggerType.LRx4Manualx10,
             ],
             [
                 self.C_thresholds,
@@ -122,6 +133,8 @@ class Trading:
                 self.lr_thresholds,
                 self.just_thresholds,
                 self.just_thresholds4,
+                self.just_thresholds10,
+                self.just_thresholds10,
             ],
         ):
             tmp_thrs = thrs.copy()
