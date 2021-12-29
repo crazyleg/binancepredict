@@ -89,7 +89,12 @@ class Trading:
         ]
 
     def update_status(
-        self, max_timestamp, spot_prices: Mapping[str, TickerStream], predictions
+        self,
+        max_timestamp,
+        spot_prices: Mapping[str, TickerStream],
+        predictions,
+        predictions_lr,
+        predictions_el,
     ):
         # log per-currency and total profits
         # check for double trades!
@@ -138,6 +143,19 @@ class Trading:
             ],
         ):
             tmp_thrs = thrs.copy()
+
+            if thr_type in [
+                TriggerType.LRx3,
+                TriggerType.LR,
+                TriggerType.LRx4,
+                TriggerType.LRx4Manual,
+                TriggerType.LRx4Manualx10,
+            ]:
+                predictions = predictions_lr.copy()
+
+            if thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
+                predictions = predictions_el.copy()
+
             if thr_type == TriggerType.LRx3:
                 tmp_thrs.buy_thr *= 3
                 tmp_thrs.sell_thr *= 3
