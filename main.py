@@ -5,7 +5,7 @@ import torch
 import yaml
 from logstash_async.handler import AsynchronousLogstashHandler
 from prettylog import basic_config
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, MultiTaskElasticNet
 
 from api.binance import BinanceAPI
 from datastructures.tickerstream import TickerStream
@@ -86,9 +86,14 @@ def run_prediction_loop():
         # TODO add a second trigger some conservative - threshold will be a quantile of historical predictions
 
         reg = LinearRegression().fit(results_for_lr, returns)
-        results = reg.predict(results)
+        results_lr = reg.predict(results)
 
-        trading_engine.update_status(max_timestamp, data, results)
+        reg = MultiTaskElasticNet().fit(results_for_lr, returns)
+        results_el = reg.predict(results)
+
+        trading_engine.update_status(
+            max_timestamp, data, results, results_lr, results_el
+        )
         logging.info("cycle finished")
 
 
