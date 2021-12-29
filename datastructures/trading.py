@@ -15,12 +15,10 @@ SELL_THR = -0.005
 
 
 class TriggerType(Enum):
-    AVG = 1
-    SUM = 2
-    MANUAL = 3
-    LR = 4
-    LR_AVG = 5
-    LR_SUM = 6
+    NN = 1
+    LR = 2
+    LR_P_3PCT = 3
+    LRx2 = 4
 
 
 @dataclass
@@ -50,8 +48,8 @@ class Trading:
         self.trades = TradesMemory()
         self.logger = LogWriter()
 
-        self.thresholds_avg = pd.read_pickle("thresholds_avg.pkl")
-        self.thresholds_sum = pd.read_pickle("thresholds_sum.pkl")
+        self.lr_thresholds = pd.read_pickle("ml/models/lr_thresholds.pkl")
+        self.C_thresholds = pd.read_pickle("ml/models/C_thresholds.pkl")
 
     def make_trade(self, trade: Trade):
         self.trades.add_trade(trade)
@@ -92,103 +90,80 @@ class Trading:
         # log per-currency and total profits
         # check for double trades!
 
-        for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
-            current_price = spot_prices[currency].latest_close_price()
-            thr = self.thresholds.set_index("pair").loc[currency]
+        for thr_type, thrs in zip(
+            [TriggerType.NN, TriggerType.LR, TriggerType.LR_P_3PCT, TriggerType.LRx2],
+            [
+                self.C_thresholds,
+                self.lr_thresholds,
+                self.lr_thresholds,
+                self.lr_thresholds,
+            ],
+        ):
+            if thr_type == TriggerType.LR_P_3PCT:
+                thrs.buy_thr *= 1.3
+                thrs.sell_thr *= 1.3
 
-            self.logger.log_currency_tick_data(
-                ts=max_timestamp,
-                currency=currency,
-                spot_price=spot_prices[currency].latest_close_price(),
-                prediction=predictions[0, c],
-                buy_thr=thr.buy_thr,
-                sell_thr=thr.sell_thr,
-            )
+            if thr_type == TriggerType.LRx2:
+                thrs.buy_thr *= 2
+                thrs.sell_thr *= 2
 
-            avg_buy_thr = self.thresholds_avg.set_index("pair").loc[currency].buy_thr
-            avg_sell_thr = self.thresholds_avg.set_index("pair").loc[currency].sell_thr
-            sum_buy_thr = self.thresholds_sum.set_index("pair").loc[currency].buy_thr
-            sum_sell_thr = self.thresholds_sum.set_index("pair").loc[currency].sell_thr
+            for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
+                current_price = spot_prices[currency].latest_close_price()
+                if currency not in thrs.pair.values:
+                    continue
+                thr = thrs.set_index("pair").loc[currency]
 
-            if predictions[0, c] > avg_buy_thr:
-                trade = Trade(
-                    timestamp=max_timestamp,
+                buy_thr = thr.buy_thr
+                sell_thr = thr.sell_thr
+
+                self.logger.log_currency_tick_data(
+                    ts=max_timestamp,
                     currency=currency,
-                    entry_price=current_price,
-                    type=Operation.BUY,
-                    trigger=TriggerType.LR_AVG,
-                )
-                kibana_extra_data = {
-                    "type": "open_trade",
-                    "currency": trade.currency,
-                    "open_price": trade.entry_price,
-                    "trade_type": trade.type,
-                    "trade_trigger": trade.trigger,
-                }
-                self.make_trade(trade)
-                logging.info(
-                    f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {TriggerType.LR_AVG} as prediction was {predictions[0, c]} and thr {avg_buy_thr}",
-                    extra=kibana_extra_data,
-                )
-            if predictions[0, c] < avg_sell_thr:
-                trade = Trade(
-                    timestamp=max_timestamp,
-                    currency=currency,
-                    entry_price=current_price,
-                    type=Operation.SELL,
-                    trigger=TriggerType.LR_AVG,
-                )
-                kibana_extra_data = {
-                    "type": "open_trade",
-                    "currency": trade.currency,
-                    "open_price": trade.entry_price,
-                    "trade_type": trade.type,
-                    "trade_trigger": trade.trigger,
-                }
-                self.make_trade(trade)
-                logging.info(
-                    f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.SELL} type: {TriggerType.LR_SUM} as prediction was {predictions[0, c]} and thr {avg_sell_thr}",
-                    extra=kibana_extra_data,
+                    spot_price=spot_prices[currency].latest_close_price(),
+                    prediction=predictions[0, c],
+                    buy_thr=buy_thr,
+                    sell_thr=sell_thr,
                 )
 
-            if predictions[0, c] > sum_buy_thr:
-                trade = Trade(
-                    timestamp=max_timestamp,
-                    currency=currency,
-                    entry_price=current_price,
-                    type=Operation.BUY,
-                    trigger=TriggerType.LR_SUM,
-                )
-                kibana_extra_data = {
-                    "type": "open_trade",
-                    "currency": trade.currency,
-                    "open_price": trade.entry_price,
-                    "trade_type": trade.type,
-                    "trade_trigger": trade.trigger,
-                }
-                self.make_trade(trade)
-                logging.info(
-                    f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {TriggerType.LR_SUM} as prediction was {predictions[0, c]} and thr {sum_buy_thr}",
-                    extra=kibana_extra_data,
-                )
-            if predictions[0, c] < sum_sell_thr:
-                trade = Trade(
-                    timestamp=max_timestamp,
-                    currency=currency,
-                    entry_price=current_price,
-                    type=Operation.SELL,
-                    trigger=TriggerType.LR_SUM,
-                )
-                kibana_extra_data = {
-                    "type": "open_trade",
-                    "currency": trade.currency,
-                    "open_price": trade.entry_price,
-                    "trade_type": trade.type,
-                    "trade_trigger": trade.trigger,
-                }
-                self.make_trade(trade)
-                logging.info(
-                    f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.SELL} type: {TriggerType.LR_AVG} as prediction was {predictions[0, c]} and thr {sum_sell_thr}",
-                    extra=kibana_extra_data,
-                )
+                if predictions[0, c] > buy_thr:
+                    trade = Trade(
+                        timestamp=max_timestamp,
+                        currency=currency,
+                        entry_price=current_price,
+                        type=Operation.BUY,
+                        trigger=thr_type,
+                    )
+                    kibana_extra_data = {
+                        "type": "open_trade",
+                        "currency": trade.currency,
+                        "open_price": trade.entry_price,
+                        "trade_type": trade.type,
+                        "trade_trigger": trade.trigger,
+                    }
+                    self.make_trade(trade)
+                    logging.info(
+                        f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {thr_type} as prediction was {predictions[0, c]} and thr {buy_thr}",
+                        extra=kibana_extra_data,
+                    )
+                if predictions[0, c] < sell_thr:
+                    trade = Trade(
+                        timestamp=max_timestamp,
+                        currency=currency,
+                        entry_price=current_price,
+                        type=Operation.SELL,
+                        trigger=thr_type,
+                    )
+                    kibana_extra_data = {
+                        "type": "open_trade",
+                        "currency": trade.currency,
+                        "open_price": trade.entry_price,
+                        "trade_type": trade.type,
+                        "trade_trigger": trade.trigger,
+                    }
+                    self.make_trade(trade)
+                    logging.info(
+                        f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.SELL} type: {thr_type} as prediction was {predictions[0, c]} and thr {sell_thr}",
+                        extra=kibana_extra_data,
+                    )
+
         self.close_trades(max_timestamp, spot_prices)

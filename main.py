@@ -44,7 +44,7 @@ with open("config.yaml", "r") as ymlfile:
 def run_prediction_loop():
     # LOG time - time to wait, getting the currency prices, log prices,
     # TODO check for maxtimestamp
-    thresholds = pd.read_pickle("ml/models/thresholds.pkl")
+    lr_thresholds = pd.read_pickle("ml/models/thresholds.pkl")
     C_thresholds = pd.read_pickle("ml/models/C_thresholds.pkl")
     trading_engine = Trading(cfg, C_thresholds, test_logger)
     API = BinanceAPI(config=cfg["binance"])
@@ -52,11 +52,11 @@ def run_prediction_loop():
     net = ResNetBSM4(
         n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
         n_outputs=len(cfg["models"]["resnet"]["symbols"]),
-        filters=32,
-        blocks=3,
+        filters=64,
+        blocks=6,
     )
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load("ml/models/BSM4.pth"))
+        net.load_state_dict(torch.load("ml/models/BSM4_64_6_mse.pth"))
     else:
         net.load_state_dict(
             torch.load("ml/models/BSM4.pth", map_location=torch.device("cpu"))
