@@ -91,7 +91,7 @@ class Trading:
         # check for double trades!
 
         for thr_type, thrs in zip(
-            [TriggerType.NN, TriggerType.LR, TriggerType.LR_P_3PCT, TriggerType.LRx2],
+            [TriggerType.NN, TriggerType.LR, TriggerType.LRx3, TriggerType.LRx6],
             [
                 self.C_thresholds,
                 self.lr_thresholds,
