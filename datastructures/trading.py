@@ -17,8 +17,8 @@ SELL_THR = -0.005
 class TriggerType(Enum):
     NN = 1
     LR = 2
-    LR_P_3PCT = 3
-    LRx2 = 4
+    LRx3 = 3
+    LRx4 = 4
 
 
 @dataclass
@@ -100,13 +100,13 @@ class Trading:
             ],
         ):
             tmp_thrs = thrs.copy()
-            if thr_type == TriggerType.LR_P_3PCT:
-                tmp_thrs.buy_thr *= 1.3
-                tmp_thrs.sell_thr *= 1.3
+            if thr_type == TriggerType.LRx3:
+                tmp_thrs.buy_thr *= 3
+                tmp_thrs.sell_thr *= 3
 
-            if thr_type == TriggerType.LRx2:
-                tmp_thrs.buy_thr *= 2
-                tmp_thrs.sell_thr *= 2
+            if thr_type == TriggerType.LRx4:
+                tmp_thrs.buy_thr *= 4
+                tmp_thrs.sell_thr *= 4
 
             for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
                 current_price = spot_prices[currency].latest_close_price()
