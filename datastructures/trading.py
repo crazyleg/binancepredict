@@ -99,19 +99,20 @@ class Trading:
                 self.lr_thresholds,
             ],
         ):
+            tmp_thrs = thrs.copy()
             if thr_type == TriggerType.LR_P_3PCT:
-                thrs.buy_thr *= 1.3
-                thrs.sell_thr *= 1.3
+                tmp_thrs.buy_thr *= 1.3
+                tmp_thrs.sell_thr *= 1.3
 
             if thr_type == TriggerType.LRx2:
-                thrs.buy_thr *= 2
-                thrs.sell_thr *= 2
+                tmp_thrs.buy_thr *= 2
+                tmp_thrs.sell_thr *= 2
 
             for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
                 current_price = spot_prices[currency].latest_close_price()
-                if currency not in thrs.pair.values:
+                if currency not in tmp_thrs.pair.values:
                     continue
-                thr = thrs.set_index("pair").loc[currency]
+                thr = tmp_thrs.set_index("pair").loc[currency]
 
                 buy_thr = thr.buy_thr
                 sell_thr = thr.sell_thr
