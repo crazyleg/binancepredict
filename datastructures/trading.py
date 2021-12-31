@@ -103,7 +103,6 @@ class Trading:
         predictions_el,
         q_thrs,
         q_thrs_hard,
-        q_thrs_reversed,
     ):
         # log per-currency and total profits
         # check for double trades!
@@ -154,7 +153,7 @@ class Trading:
                 self.just_thresholds10,
                 q_thrs,
                 q_thrs_hard,
-                q_thrs_reversed,
+                q_thrs,
             ],
         ):
             tmp_thrs = thrs.copy()
@@ -206,7 +205,9 @@ class Trading:
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.BUY,
+                        type=Operation.BUY
+                        if thr_type != TriggerType.Q_THR_REVERSED
+                        else Operation.SELL,
                         trigger=thr_type,
                         prediction=predictions[0, c],
                         threshold=buy_thr,
@@ -218,7 +219,9 @@ class Trading:
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.SELL,
+                        type=Operation.SELL
+                        if thr_type != TriggerType.Q_THR_REVERSED
+                        else Operation.BUY,
                         trigger=thr_type,
                         prediction=predictions[0, c],
                         threshold=sell_thr,
