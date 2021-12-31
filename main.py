@@ -1,10 +1,12 @@
 import logging
 
+import numpy as np
 import pandas as pd
 import torch
 import yaml
 from logstash_async.handler import AsynchronousLogstashHandler
 from prettylog import basic_config
+from scipy import stats
 from sklearn.linear_model import LinearRegression, MultiTaskElasticNet
 
 from api.binance import BinanceAPI
@@ -85,6 +87,42 @@ def run_prediction_loop():
 
         # TODO add a second trigger some conservative - threshold will be a quantile of historical predictions
 
+        # Naive quatile thrsholds generetaion
+        q_thrs = []
+        for i in range(0, 20):
+            h_thr = np.quantile(results_for_lr[:, i], 0.95)
+            l_thr = np.quantile(results_for_lr[:, i], 0.05)
+
+            q_thrs.append(
+                {
+                    "pair": cfg["models"]["resnet"]["symbols"][i],
+                    "buy_thr": h_thr,
+                    "sell_thr": l_thr,
+                }
+            )
+        q_thrs = pd.DataFrame(q_thrs)
+
+        # harder check
+        q_thrs_with_stats_check = []
+        for i in range(0, 20):
+            pos_thrs = results_for_lr[returns[:, i] > 0.0025, i]
+            neg_thrs = results_for_lr[returns[:, i] < -0.0025, i]
+
+            if (
+                (stats.ttest_ind(pos_thrs, neg_thrs).pvalue < 0.05)
+                and (pos_thrs.median() > neg_thrs.median())
+                and (pos_thrs.mean() > neg_thrs.mean())
+            ):
+                q_thrs_with_stats_check.append(
+                    {
+                        "pair": cfg["models"]["resnet"]["symbols"][i],
+                        "buy_thr": pos_thrs.mean(),
+                        "sell_thr": neg_thrs.mean(),
+                    }
+                )
+
+        q_thrs_with_stats_check = pd.DataFrame(q_thrs_with_stats_check)
+
         reg = LinearRegression().fit(results_for_lr, returns)
         results_lr = reg.predict(results)
 
@@ -92,7 +130,13 @@ def run_prediction_loop():
         results_el = reg.predict(results)
 
         trading_engine.update_status(
-            max_timestamp, data, results, results_lr, results_el
+            max_timestamp,
+            data,
+            results,
+            results_lr,
+            results_el,
+            q_thrs,
+            q_thrs_with_stats_check,
         )
         logging.info("cycle finished")
 

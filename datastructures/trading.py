@@ -23,6 +23,8 @@ class TriggerType(Enum):
     LRx4Manual = 6
     Elasticx10 = 7
     LRx4Manualx10 = 8
+    Q_THR = 9
+    Q_THR_HARD = 10
 
 
 @dataclass
@@ -32,6 +34,8 @@ class Trade:
     entry_price: float
     type: Operation
     trigger: TriggerType
+    prediction: float
+    threshold: float
 
 
 @dataclass
@@ -55,8 +59,9 @@ class Trading:
         self.lr_thresholds = pd.read_pickle("ml/models/lr_thresholds.pkl")
         self.C_thresholds = pd.read_pickle("ml/models/C_thresholds.pkl")
 
-    def make_trade(self, trade: Trade):
+    def make_trade(self, trade: Trade, timestamp):
         self.trades.add_trade(trade)
+        self.logger.log_trade_open(trade, timestamp)
         self.active_trades += 1
 
     def __len__(self):
@@ -95,6 +100,8 @@ class Trading:
         predictions,
         predictions_lr,
         predictions_el,
+        q_thrs,
+        q_thrs_hard,
     ):
         # log per-currency and total profits
         # check for double trades!
@@ -130,6 +137,8 @@ class Trading:
                 TriggerType.LRx4Manual,
                 TriggerType.Elasticx10,
                 TriggerType.LRx4Manualx10,
+                TriggerType.Q_THR,
+                TriggerType.Q_THR_HARD,
             ],
             [
                 self.C_thresholds,
@@ -140,6 +149,8 @@ class Trading:
                 self.just_thresholds4,
                 self.just_thresholds10,
                 self.just_thresholds10,
+                q_thrs,
+                q_thrs_hard,
             ],
         ):
             tmp_thrs = thrs.copy()
@@ -180,6 +191,7 @@ class Trading:
                     prediction=predictions[0, c],
                     buy_thr=buy_thr,
                     sell_thr=sell_thr,
+                    trigger_type=thr_type,
                 )
 
                 if predictions[0, c] > buy_thr:
@@ -189,19 +201,11 @@ class Trading:
                         entry_price=current_price,
                         type=Operation.BUY,
                         trigger=thr_type,
+                        prediction=predictions[0, c],
+                        threshold=buy_thr,
                     )
-                    kibana_extra_data = {
-                        "type": "open_trade",
-                        "currency": trade.currency,
-                        "open_price": trade.entry_price,
-                        "trade_type": trade.type,
-                        "trade_trigger": trade.trigger,
-                    }
-                    self.make_trade(trade)
-                    logging.info(
-                        f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {thr_type} as prediction was {predictions[0, c]} and thr {buy_thr}",
-                        extra=kibana_extra_data,
-                    )
+                    self.make_trade(trade, max_timestamp)
+
                 if predictions[0, c] < sell_thr:
                     trade = Trade(
                         timestamp=max_timestamp,
@@ -209,18 +213,9 @@ class Trading:
                         entry_price=current_price,
                         type=Operation.SELL,
                         trigger=thr_type,
+                        prediction=predictions[0, c],
+                        threshold=sell_thr,
                     )
-                    kibana_extra_data = {
-                        "type": "open_trade",
-                        "currency": trade.currency,
-                        "open_price": trade.entry_price,
-                        "trade_type": trade.type,
-                        "trade_trigger": trade.trigger,
-                    }
-                    self.make_trade(trade)
-                    logging.info(
-                        f"opening the trade on ts: {max_timestamp} currency: {currency} entry_price: {trade.entry_price}  type: {Operation.SELL} type: {thr_type} as prediction was {predictions[0, c]} and thr {sell_thr}",
-                        extra=kibana_extra_data,
-                    )
+                    self.make_trade(trade, max_timestamp)
 
         self.close_trades(max_timestamp, spot_prices)
