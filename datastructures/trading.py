@@ -97,7 +97,7 @@ class Trading:
         self,
         max_timestamp,
         spot_prices: Mapping[str, TickerStream],
-        predictions,
+        predictions_nn,
         predictions_lr,
         predictions_el,
         q_thrs,
@@ -164,8 +164,11 @@ class Trading:
             ]:
                 predictions = predictions_lr.copy()
 
-            if thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
+            elif thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
                 predictions = predictions_el.copy()
+
+            else:
+                predictions = predictions_nn.numpy().copy()
 
             if thr_type == TriggerType.LRx3:
                 tmp_thrs.buy_thr *= 3
