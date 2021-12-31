@@ -25,6 +25,7 @@ class TriggerType(Enum):
     LRx4Manualx10 = 8
     Q_THR = 9
     Q_THR_HARD = 10
+    Q_THR_REVERSED = 11
 
 
 @dataclass
@@ -102,6 +103,7 @@ class Trading:
         predictions_el,
         q_thrs,
         q_thrs_hard,
+        q_thrs_reversed,
     ):
         # log per-currency and total profits
         # check for double trades!
@@ -139,6 +141,7 @@ class Trading:
                 TriggerType.LRx4Manualx10,
                 TriggerType.Q_THR,
                 TriggerType.Q_THR_HARD,
+                TriggerType.Q_THR_REVERSED,
             ],
             [
                 self.C_thresholds,
@@ -151,6 +154,7 @@ class Trading:
                 self.just_thresholds10,
                 q_thrs,
                 q_thrs_hard,
+                q_thrs_reversed,
             ],
         ):
             tmp_thrs = thrs.copy()

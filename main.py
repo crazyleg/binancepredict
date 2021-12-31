@@ -103,6 +103,21 @@ def run_prediction_loop():
             )
         q_thrs = pd.DataFrame(q_thrs)
 
+        q_thrs_reversed = []
+        q_thrs_reversed.append({"pair": "dummy", "buy_thr": -1, "sell_thr": -1})
+        for i in range(0, 20):
+            h_thr = np.quantile(results_for_lr[:, i], 0.95)
+            l_thr = np.quantile(results_for_lr[:, i], 0.05)
+
+            q_thrs_reversed.append(
+                {
+                    "pair": cfg["models"]["resnet"]["symbols"][i],
+                    "buy_thr": l_thr,
+                    "sell_thr": h_thr,
+                }
+            )
+        q_thrs_reversed = pd.DataFrame(q_thrs_reversed)
+
         # harder check
         q_thrs_with_stats_check = []
         q_thrs_with_stats_check.append({"pair": "dummy", "buy_thr": -1, "sell_thr": -1})
@@ -111,7 +126,7 @@ def run_prediction_loop():
             neg_thrs = results_for_lr[returns[:, i] < -0.0025, i]
 
             if (
-                (stats.ttest_ind(pos_thrs, neg_thrs).pvalue < 0.05)
+                (stats.ttest_ind(pos_thrs, neg_thrs).pvalue < 0.1)
                 and (pos_thrs.median() > neg_thrs.median())
                 and (pos_thrs.mean() > neg_thrs.mean())
             ):
@@ -139,6 +154,7 @@ def run_prediction_loop():
             results_el,
             q_thrs,
             q_thrs_with_stats_check,
+            q_thrs_reversed,
         )
         logging.info("cycle finished")
 
