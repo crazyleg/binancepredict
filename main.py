@@ -89,9 +89,9 @@ def run_prediction_loop():
 
         # Naive quatile thrsholds generetaion
         q_thrs = []
-        q_thrs.append("pair": 'dummy'
-                    "buy_thr": -1,
-                    "sell_thr": -1)
+        q_thrs.append({"pair": 'dummy'
+            "buy_thr": -1,
+            "sell_thr": -1})
         for i in range(0, 20):
             h_thr = np.quantile(results_for_lr[:, i], 0.95)
             l_thr = np.quantile(results_for_lr[:, i], 0.05)
@@ -107,9 +107,9 @@ def run_prediction_loop():
 
         # harder check
         q_thrs_with_stats_check = []
-        q_thrs_with_stats_check.append("pair": 'dummy'
+        q_thrs_with_stats_check.append({"pair": 'dummy'
             "buy_thr": -1,
-            "sell_thr": -1)
+            "sell_thr": -1})
         for i in range(0, 20):
             pos_thrs = results_for_lr[returns[:, i] > 0.0025, i]
             neg_thrs = results_for_lr[returns[:, i] < -0.0025, i]
