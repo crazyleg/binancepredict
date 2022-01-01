@@ -26,6 +26,8 @@ class TriggerType(Enum):
     Q_THR = 9
     Q_THR_HARD = 10
     Q_THR_REVERSED = 11
+    FOCAL = 12
+    FOCAL_5 = 13
 
 
 @dataclass
@@ -57,8 +59,55 @@ class Trading:
         self.trades = TradesMemory()
         self.logger = LogWriter()
 
-        self.lr_thresholds = pd.read_pickle("ml/models/lr_thresholds.pkl")
-        self.C_thresholds = pd.read_pickle("ml/models/C_thresholds.pkl")
+        self.thresholds_m = pd.DataFrame(
+            [
+                {"pair": "DOGEUSDT", "buy_thr": 0.38, "sell_thr": 0.41},
+                {"pair": "AVAXUSDT", "buy_thr": 0.5, "sell_thr": 0.47},
+                {"pair": "SOLUSDT", "buy_thr": 0.46, "sell_thr": 0.41},
+                {"pair": "SHIBUSDT", "buy_thr": 0.5, "sell_thr": 0.51},
+                {"pair": "EURUSDT", "buy_thr": 1, "sell_thr": 1},
+                {"pair": "GBPUSDT", "buy_thr": 1, "sell_thr": 1},
+                {"pair": "ETCETH", "buy_thr": 1, "sell_thr": 1},
+                {"pair": "ETCBTC", "buy_thr": 1, "sell_thr": 1},
+                {"pair": "MKRUSDT", "buy_thr": 0.2, "sell_thr": 0.3},
+                {"pair": "MKRBTC", "buy_thr": 0.1, "sell_thr": 0.19},
+                {"pair": "IOTAUSDT", "buy_thr": 0.28, "sell_thr": 0.34},
+                {"pair": "ADAUSDT", "buy_thr": 0.28, "sell_thr": 0.25},
+                {"pair": "XLMUSDT", "buy_thr": 0.33, "sell_thr": 0.40},
+                {"pair": "TRXUSDT", "buy_thr": 0.16, "sell_thr": 0.18},
+                {"pair": "XMRUSDT", "buy_thr": 0.22, "sell_thr": 0.25},
+                {"pair": "EOSUSDT", "buy_thr": 0.32, "sell_thr": 0.3},
+                {"pair": "DOGEGBP", "buy_thr": 0.30, "sell_thr": 0.40},
+                {"pair": "BTCEUR", "buy_thr": 0.17, "sell_thr": 0.15},
+                {"pair": "BTCGBP", "buy_thr": 0.18, "sell_thr": 0.16},
+                {"pair": "BTCUSDT", "buy_thr": 0.19, "sell_thr": 0.18},
+            ]
+        ).set_index("pair")
+
+        self.thresholds = pd.DataFrame(
+            [
+                {"pair": "DOGEUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "AVAXUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "SOLUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "SHIBUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "EURUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "GBPUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "ETCETH", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "ETCBTC", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "MKRUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "MKRBTC", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "IOTAUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "ADAUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "XLMUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "TRXUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "XMRUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "EOSUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "DOGEGBP", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "BTCEUR", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "BTCGBP", "buy_thr": 0.5, "sell_thr": 0.5},
+                {"pair": "BTCUSDT", "buy_thr": 0.5, "sell_thr": 0.5},
+            ]
+        ).set_index("pair")
 
     def make_trade(self, trade: Trade, timestamp):
         self.trades.add_trade(trade)
@@ -98,94 +147,29 @@ class Trading:
         self,
         max_timestamp,
         spot_prices: Mapping[str, TickerStream],
-        predictions_nn,
-        predictions_lr,
-        predictions_el,
-        q_thrs,
-        q_thrs_hard,
+        predictions_up,
+        predictions_down,
     ):
         # log per-currency and total profits
         # check for double trades!
 
-        self.just_thresholds = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.002, "sell_thr": -0.002}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
-        self.just_thresholds4 = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.004, "sell_thr": -0.004}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
-        self.just_thresholds10 = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.01, "sell_thr": -0.01}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
         for thr_type, thrs in zip(
             [
-                TriggerType.NN,
-                TriggerType.LR,
-                TriggerType.LRx3,
-                TriggerType.LRx4,
-                TriggerType.Elastic,
-                TriggerType.LRx4Manual,
-                TriggerType.Elasticx10,
-                TriggerType.LRx4Manualx10,
-                TriggerType.Q_THR,
-                TriggerType.Q_THR_HARD,
-                TriggerType.Q_THR_REVERSED,
+                TriggerType.FOCAL,
+                TriggerType.FOCAL_5,
             ],
             [
-                self.C_thresholds,
-                self.lr_thresholds,
-                self.lr_thresholds,
-                self.lr_thresholds,
-                self.just_thresholds,
-                self.just_thresholds4,
-                self.just_thresholds10,
-                self.just_thresholds10,
-                q_thrs,
-                q_thrs_hard,
-                q_thrs,
+                self.thresholds_m,
+                self.thresholds,
             ],
         ):
-            tmp_thrs = thrs.copy()
-
-            if thr_type in [
-                TriggerType.LRx3,
-                TriggerType.LR,
-                TriggerType.LRx4,
-                TriggerType.LRx4Manual,
-                TriggerType.LRx4Manualx10,
-            ]:
-                predictions = predictions_lr.copy()
-
-            elif thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
-                predictions = predictions_el.copy()
-
-            else:
-                predictions = predictions_nn.numpy().copy()
-
-            if thr_type == TriggerType.LRx3:
-                tmp_thrs.buy_thr *= 3
-                tmp_thrs.sell_thr *= 3
-
-            if thr_type == TriggerType.LRx4:
-                tmp_thrs.buy_thr *= 4
-                tmp_thrs.sell_thr *= 4
 
             for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
                 current_price = spot_prices[currency].latest_close_price()
-                if currency not in tmp_thrs.pair.values:
+                if currency not in thrs.index.values:
                     continue
-                thr = tmp_thrs.set_index("pair").loc[currency]
+
+                thr = thrs.loc[currency]
 
                 buy_thr = thr.buy_thr
                 sell_thr = thr.sell_thr
@@ -194,36 +178,32 @@ class Trading:
                     ts=max_timestamp,
                     currency=currency,
                     spot_price=spot_prices[currency].latest_close_price(),
-                    prediction=predictions[0, c],
+                    prediction=predictions_up[0, c],
                     buy_thr=buy_thr,
                     sell_thr=sell_thr,
                     trigger_type=thr_type,
                 )
 
-                if predictions[0, c] > buy_thr:
+                if predictions_up[0, c] > buy_thr:
                     trade = Trade(
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.BUY
-                        if thr_type != TriggerType.Q_THR_REVERSED
-                        else Operation.SELL,
+                        type=Operation.BUY,
                         trigger=thr_type,
-                        prediction=predictions[0, c],
+                        prediction=predictions_up[0, c],
                         threshold=buy_thr,
                     )
                     self.make_trade(trade, max_timestamp)
 
-                if predictions[0, c] < sell_thr:
+                if predictions_down[0, c] > sell_thr:
                     trade = Trade(
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.SELL
-                        if thr_type != TriggerType.Q_THR_REVERSED
-                        else Operation.BUY,
+                        type=Operation.SELL,
                         trigger=thr_type,
-                        prediction=predictions[0, c],
+                        prediction=predictions_down[0, c],
                         threshold=sell_thr,
                     )
                     self.make_trade(trade, max_timestamp)
