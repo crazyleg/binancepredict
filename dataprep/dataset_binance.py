@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, utils
 
-NEEDED_MOVE_UP = 1.006
+NEEDED_MOVE_UP = 1.012
 NEEDED_MOVE_DOWN = 1 / NEEDED_MOVE_UP
 
 SYMBOLS = set(
@@ -119,18 +119,18 @@ class BinanceCoinDataset(Dataset):
                     except FileNotFoundError as error:
                         pass
 
-            for day in range(1, 31, 1):
-                try:
-                    file = f"{s}-1m-2021-12-{day:02d}.zip"
-                    data = pd.read_csv(
-                        PATH_DAILY + file,
-                        names=FEATURES,
-                        dtype=TYPES,
-                    )
-                    data = data[NEEDED_COLUMNS]
-                    currency.append(data)
-                except FileNotFoundError as error:
-                    pass
+            # for day in range(1, 31, 1):
+            #     try:
+            #         file = f"{s}-1m-2021-12-{day:02d}.zip"
+            #         data = pd.read_csv(
+            #             PATH_DAILY + file,
+            #             names=FEATURES,
+            #             dtype=TYPES,
+            #         )
+            #         data = data[NEEDED_COLUMNS]
+            #         currency.append(data)
+            #     except FileNotFoundError as error:
+            #         pass
 
             currency = pd.concat(currency).set_index(["open_timestamp"])
             ys = currency[["close"]]

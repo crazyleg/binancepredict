@@ -59,28 +59,52 @@ class Trading:
         self.trades = TradesMemory()
         self.logger = LogWriter()
 
+        # self.thresholds_m = pd.DataFrame(
+        #     [
+        #         {"pair": "DOGEUSDT", "buy_thr": 0.21, "sell_thr": 0.21},
+        #         {"pair": "AVAXUSDT", "buy_thr": 0.38, "sell_thr": 0.38},
+        #         {"pair": "SOLUSDT", "buy_thr": 0.30, "sell_thr": 0.31},
+        #         {"pair": "SHIBUSDT", "buy_thr": 0.39, "sell_thr": 0.39},
+        #         {"pair": "EURUSDT", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "GBPUSDT", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "ETCETH", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "ETCBTC", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "MKRUSDT", "buy_thr": 0.2, "sell_thr": 0.2},
+        #         {"pair": "MKRBTC", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "IOTAUSDT", "buy_thr": 0.30, "sell_thr": 0.30},
+        #         {"pair": "ADAUSDT", "buy_thr": 0.22, "sell_thr": 0.22},
+        #         {"pair": "XLMUSDT", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "TRXUSDT", "buy_thr": 0.12, "sell_thr": 0.12},
+        #         {"pair": "XMRUSDT", "buy_thr": 0.16, "sell_thr": 0.16},
+        #         {"pair": "EOSUSDT", "buy_thr": 0.18, "sell_thr": 0.18},
+        #         {"pair": "DOGEGBP", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "BTCEUR", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "BTCGBP", "buy_thr": 1, "sell_thr": 1},
+        #         {"pair": "BTCUSDT", "buy_thr": 0.12, "sell_thr": 0.12},
+        #     ]
+        # ).set_index("pair")
         self.thresholds_m = pd.DataFrame(
             [
-                {"pair": "DOGEUSDT", "buy_thr": 0.21, "sell_thr": 0.21},
-                {"pair": "AVAXUSDT", "buy_thr": 0.38, "sell_thr": 0.38},
-                {"pair": "SOLUSDT", "buy_thr": 0.30, "sell_thr": 0.31},
-                {"pair": "SHIBUSDT", "buy_thr": 0.39, "sell_thr": 0.39},
+                {"pair": "DOGEUSDT", "buy_thr": 0.24, "sell_thr": 0.24},
+                {"pair": "AVAXUSDT", "buy_thr": 0.30, "sell_thr": 0.30},
+                {"pair": "SOLUSDT", "buy_thr": 0.33, "sell_thr": 0.33},
+                {"pair": "SHIBUSDT", "buy_thr": 0.30, "sell_thr": 0.30},
                 {"pair": "EURUSDT", "buy_thr": 1, "sell_thr": 1},
                 {"pair": "GBPUSDT", "buy_thr": 1, "sell_thr": 1},
                 {"pair": "ETCETH", "buy_thr": 1, "sell_thr": 1},
                 {"pair": "ETCBTC", "buy_thr": 1, "sell_thr": 1},
-                {"pair": "MKRUSDT", "buy_thr": 0.2, "sell_thr": 0.2},
+                {"pair": "MKRUSDT", "buy_thr": 0.4, "sell_thr": 0.4},
                 {"pair": "MKRBTC", "buy_thr": 1, "sell_thr": 1},
-                {"pair": "IOTAUSDT", "buy_thr": 0.30, "sell_thr": 0.30},
-                {"pair": "ADAUSDT", "buy_thr": 0.22, "sell_thr": 0.22},
+                {"pair": "IOTAUSDT", "buy_thr": 0.28, "sell_thr": 0.28},
+                {"pair": "ADAUSDT", "buy_thr": 0.40, "sell_thr": 0.40},
                 {"pair": "XLMUSDT", "buy_thr": 1, "sell_thr": 1},
-                {"pair": "TRXUSDT", "buy_thr": 0.12, "sell_thr": 0.12},
-                {"pair": "XMRUSDT", "buy_thr": 0.16, "sell_thr": 0.16},
-                {"pair": "EOSUSDT", "buy_thr": 0.18, "sell_thr": 0.18},
+                {"pair": "TRXUSDT", "buy_thr": 1, "sell_thr": 1},
+                {"pair": "XMRUSDT", "buy_thr": 0.4, "sell_thr": 0.4},
+                {"pair": "EOSUSDT", "buy_thr": 0.4, "sell_thr": 0.4},
                 {"pair": "DOGEGBP", "buy_thr": 1, "sell_thr": 1},
                 {"pair": "BTCEUR", "buy_thr": 1, "sell_thr": 1},
                 {"pair": "BTCGBP", "buy_thr": 1, "sell_thr": 1},
-                {"pair": "BTCUSDT", "buy_thr": 0.12, "sell_thr": 0.12},
+                {"pair": "BTCUSDT", "buy_thr": 0.25, "sell_thr": 0.25},
             ]
         ).set_index("pair")
 

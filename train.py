@@ -34,7 +34,7 @@ run = neptune.init(
     api_token=NEPTUNE_API_TOKEN,
 )  # your credentials
 
-params = {"learning_rate": 0.00005, "optimizer": "torch_optimizer.adabound()"}
+params = {"learning_rate": 0.00001, "optimizer": "Adam"}
 run["parameters"] = params
 
 
@@ -87,7 +87,7 @@ n_features = train_set.data.shape[1]
 net = ResNetBSM4(n_features=n_features, n_outputs=len(train_set.currencies))
 # net.load_state_dict(torch.load("BSM_big.pth"))
 net.cuda(device)
-optimizer = torch_optimizer.AdaBound(net.parameters(), lr=params["learning_rate"])
+optimizer = torch.optim.Adam(net.parameters(), lr=params["learning_rate"])
 
 trainloader = torch.utils.data.DataLoader(
     train_set, batch_size=batch_size, shuffle=True, num_workers=16
