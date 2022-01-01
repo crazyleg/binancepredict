@@ -91,7 +91,7 @@ class BinanceCoinDataset(Dataset):
         self,
         test=(False, 0.7),
         window_size=1024,
-        y_time_forward=15,
+        y_time_forward=60,
         transform=None,
         target_transform=None,
         currencies=["BTCUSDT", "ADAUSDT", "XMRUSDT"],
