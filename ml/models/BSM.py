@@ -12,14 +12,12 @@ class ResNetBSM4(nn.Module):
         self,
         n_features,
         n_outputs,
-        filters=96,
-        blocks=8,
+        filters=64,
+        blocks=6,
     ):
         super(ResNetBSM4, self).__init__()
 
-        self.net1 = ResNet1D(
-            n_features, filters, 3, 2, 96, blocks, n_outputs, use_bn=False
-        )
+        self.net1 = ResNet1D(n_features, filters, 3, 1, 1, blocks, n_outputs)
         # self.net2 = ResNet1D(98, 64, 3, 1 , 1, 6, 14)
         self.flat = nn.Flatten()
         self.fcn1 = nn.Linear(n_outputs, n_outputs)
