@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch_optimizer
 import torchvision
 import torchvision.transforms as transforms
 from dotenv import load_dotenv
@@ -33,7 +34,7 @@ run = neptune.init(
     api_token=NEPTUNE_API_TOKEN,
 )  # your credentials
 
-params = {"learning_rate": 0.00005, "optimizer": "Adam"}
+params = {"learning_rate": 0.00005, "optimizer": "torch_optimizer.adabound()"}
 run["parameters"] = params
 
 
@@ -79,14 +80,14 @@ C = [
     "BTCUSDT",
 ]
 
-train_set = BinanceCoinDataset(test=(False, 0.98), window_size=512, currencies=C)
-val_set = BinanceCoinDataset(test=(True, 0.98), window_size=512, currencies=C)
+train_set = BinanceCoinDataset(test=(False, 0.99), window_size=512, currencies=C)
+val_set = BinanceCoinDataset(test=(True, 0.99), window_size=512, currencies=C)
 
 n_features = train_set.data.shape[1]
 net = ResNetBSM4(n_features=n_features, n_outputs=len(train_set.currencies))
 # net.load_state_dict(torch.load("BSM_big.pth"))
 net.cuda(device)
-optimizer = optim.Adam(net.parameters(), lr=params["learning_rate"])
+optimizer = torch_optimizer.AdaBound(net.parameters(), lr=params["learning_rate"])
 
 trainloader = torch.utils.data.DataLoader(
     train_set, batch_size=batch_size, shuffle=True, num_workers=16

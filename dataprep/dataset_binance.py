@@ -83,7 +83,7 @@ TYPES = {
 PATH = "data/bin/"
 PATH_DAILY = "data/bin/daily/"
 min_time = 1577836800000
-max_time = 1640606400000
+max_time = 1640991600000
 
 
 class BinanceCoinDataset(Dataset):
@@ -160,6 +160,8 @@ class BinanceCoinDataset(Dataset):
             self.data_y = self.data_y.join(results_y[currencies[i]])
 
         self.y_target_columns = ["close_" + c for c in self.currencies]
+        self.y_high_columns = ["high_" + c for c in self.currencies]
+        self.y_low_columns = ["low_" + c for c in self.currencies]
 
         self.data = (
             self.data.iloc[: int(self.data.shape[0] * test[1])]

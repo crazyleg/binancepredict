@@ -12,7 +12,7 @@ class ResNetBSM4(nn.Module):
         self,
         n_features,
         n_outputs,
-        filters=64,
+        filters=16,
         blocks=6,
     ):
         super(ResNetBSM4, self).__init__()
