@@ -8,6 +8,9 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, utils
 
+NEEDED_MOVE_UP = 1.006
+NEEDED_MOVE_DOWN = 1 / NEEDED_MOVE_UP
+
 SYMBOLS = set(
     [
         "DOGEUSDT",
@@ -106,9 +109,6 @@ class BinanceCoinDataset(Dataset):
                 for month in range(1, 13, 1):
                     try:
                         file = f"{s}-1m-{year}-{month:02d}.zip"
-                        if file == "DOGEUSDT-1m-2021-01.zip":
-                            print("t")
-                            pass
                         data = pd.read_csv(
                             PATH + f"{s}-1m-{year}-{month:02d}.zip",
                             names=FEATURES,
@@ -182,17 +182,46 @@ class BinanceCoinDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.data.iloc[idx : idx + self.window_size]
 
-        current_price = self.data_y.iloc[idx + self.window_size - 1][
-            self.y_target_columns
-        ]
+        future_prices = self.data_y.iloc[
+            idx + self.window_size : idx + self.window_size + self.y_time_forward
+        ][self.y_target_columns]
 
-        y = self.data_y.iloc[idx + self.y_time_forward + self.window_size - 1][
-            self.y_target_columns
-        ]
+        # Thats not cool cause actually it would be better to use HIGH and LOW
+        # prices on a tick-level data. But I don't have those, so let's predict
+        # a more general case.
 
-        lin_return = (y / current_price) - 1
-        lin_return[(y == -1) | (current_price == -1)] = -1
+        # So here we just are looking for a fast of having any closing price above or below threshold
+
+        higher_bond = (
+            self.data_y.iloc[idx + self.window_size - 1][self.y_target_columns]
+            * NEEDED_MOVE_UP
+        )
+
+        lower_bond = (
+            self.data_y.iloc[idx + self.window_size - 1][self.y_target_columns]
+            * NEEDED_MOVE_DOWN
+        )
+
+        current_prices_are_valid = (
+            (
+                self.data_y.iloc[
+                    idx
+                    + self.window_size : idx
+                    + self.window_size
+                    + self.y_time_forward
+                ][self.y_target_columns]
+                != -1
+            )
+            .any()
+            .values
+        )
+
+        up_markers = (future_prices > higher_bond).any().values.astype(np.float32)
+        down_markers = (future_prices < lower_bond).any().values.astype(np.float32)
+
+        up_markers = np.where(current_prices_are_valid, up_markers, -1)
+        down_markers = np.where(current_prices_are_valid, down_markers, -1)
 
         x = sample.values.swapaxes(0, 1).astype(np.float32)
 
-        return x, lin_return.values
+        return x, up_markers, down_markers

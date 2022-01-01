@@ -33,14 +33,26 @@ run = neptune.init(
     api_token=NEPTUNE_API_TOKEN,
 )  # your credentials
 
-params = {"learning_rate": 0.0001, "optimizer": "Adam"}
+params = {"learning_rate": 0.00005, "optimizer": "Adam"}
 run["parameters"] = params
 
 
 device = torch.device("cuda")
 
 
-criterion = nn.MSELoss()
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def forward(self, inputs, targets):
+        bce_loss = F.binary_cross_entropy_with_logits(inputs.squeeze(), targets.float())
+        loss = self.alpha * (1 - torch.exp(-bce_loss)) ** self.gamma * bce_loss
+        return loss
+
+
+criterion = FocalLoss()
 
 batch_size = 256
 
@@ -101,27 +113,34 @@ for epoch in range(80):  # loop over the dataset multiple times
     for i, data in enumerate(trainloader, 0):
         # if i > 2: break
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
-        inputs, labels = (
+        inputs, up_labels, down_labels = data
+        inputs, up_labels, down_labels = (
             inputs.to(device),
-            labels.to(device),
+            up_labels.to(device),
+            down_labels.to(device),
         )
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        outputs = net(inputs)
-        outputs = (labels != -1).detach() * outputs
-        labels = (labels != -1).detach() * labels
+        outputs_up, outputs_down = net(inputs)
 
-        loss = criterion(outputs, labels)
+        up_labels_copy = up_labels.detach()
+        down_labels_copy = down_labels.detach()
+
+        outputs_up[up_labels_copy == -1] = 0
+        outputs_down[down_labels_copy == -1] = 0
+        up_labels[up_labels_copy == -1] = 0
+        down_labels[down_labels_copy == -1] = 0
+
+        loss1 = criterion(outputs_up, up_labels)
+        loss2 = criterion(outputs_down, down_labels)
+        loss = loss1 + loss2
         loss.backward()
         # print(loss.item())
 
         optimizer.step()
 
-        y.append(labels.cpu().detach())
-        y_hat.append(outputs.cpu().detach())
         losses.append(loss.cpu().detach())
 
         # print statistics
@@ -130,8 +149,6 @@ for epoch in range(80):  # loop over the dataset multiple times
             run["train/loss"].log(loss.item())
             print("[%d, %5d] loss: %.8f " % (epoch + 1, i + 1, loss.item()))
 
-    y = np.vstack(y)
-    y_hat = np.vstack(y_hat)
     losses = np.vstack(losses)
 
     print("starting evaluations")
@@ -147,24 +164,29 @@ for epoch in range(80):  # loop over the dataset multiple times
     net.eval()
     with torch.no_grad():
         for i, data in enumerate(testloader, 0):
-            inputs, labels = data
-            inputs, labels = (
+            inputs, up_labels, down_labels = data
+            inputs, up_labels, down_labels = (
                 inputs.to(device),
-                labels.to(device),
+                up_labels.to(device),
+                down_labels.to(device),
             )
 
-            outputs = net(inputs)
-            outputs = (labels != -1).detach() * outputs
-            labels = (labels != -1).detach() * labels
+            outputs_up, outputs_down = net(inputs)
 
-            loss = criterion(outputs, labels)
+            up_labels_copy = up_labels.detach()
+            down_labels_copy = down_labels.detach()
+
+            outputs_up[up_labels_copy == -1] = 0
+            outputs_down[down_labels_copy == -1] = 0
+            up_labels[up_labels_copy == -1] = 0
+            down_labels[down_labels_copy == -1] = 0
+
+            loss1 = criterion(outputs_up, up_labels)
+            loss2 = criterion(outputs_down, down_labels)
+            loss = loss1 + loss2
 
             losses.append(loss.item())
-            pred.append((outputs).cpu().detach())
-            labels_h.append((labels).cpu().detach())
 
-        y_test = np.vstack(labels_h)
-        y_hat_test = np.vstack(pred)
         losses_test = np.vstack(losses)
 
         scheduler.step(np.array(losses).mean())
