@@ -12,19 +12,28 @@ class LogEvent(Enum):
 
 class LogWriter:
     def log_currency_tick_data(
-        self, ts, currency, spot_price, prediction, buy_thr, sell_thr, trigger_type
+        self,
+        ts,
+        currency,
+        spot_price,
+        prediction_up,
+        prediction_down,
+        buy_thr,
+        sell_thr,
+        trigger_type,
     ):
         kibana_extra_data = {
             "log_event_type": LogEvent.TICK,
             "currency": currency,
             "spot_price": spot_price,
-            "prediction": prediction.item(),
+            "prediction_up": prediction_up.item(),
+            "prediction_down": prediction_down.item(),
             "trade_trigger": trigger_type,
             "best_thr_avg_positive": buy_thr,
             "best_thr_sum_positive": sell_thr,
         }
         logging.info(
-            f"logging spot data on ts: {ts} currency: {currency} spot_price: {spot_price} prediction: {prediction.item()} buy_thr: {buy_thr} sell_thr: {sell_thr} trigger_type: {trigger_type}",
+            f"logging spot data on ts: {ts} currency: {currency} spot_price: {spot_price} prediction_up: {prediction_up.item()} prediction_down: {prediction_down.item()}  buy_thr: {buy_thr} sell_thr: {sell_thr} trigger_type: {trigger_type}",
             extra=kibana_extra_data,
         )
 
@@ -64,6 +73,6 @@ class LogWriter:
             "threshold": trade.threshold,
         }
         logging.info(
-            f"opening the trade on ts: {timestamp} currency: {trade.currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {trade.trigger} prediction: {trade.prediction} thr: {trade.threshold}",
+            f"opening the trade on ts: {timestamp} currency: {trade.currency} entry_price: {trade.entry_price}  type: {trade.type} type: {trade.trigger} prediction: {trade.prediction} thr: {trade.threshold}",
             extra=kibana_extra_data,
         )
