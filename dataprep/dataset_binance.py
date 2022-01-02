@@ -10,26 +10,18 @@ from torchvision import transforms, utils
 
 SYMBOLS = set(
     [
-        "DOGEUSDT",
         "AVAXUSDT",
         "SOLUSDT",
-        "SHIBUSDT",
-        "EURUSDT",
-        "GBPUSDT",
-        "BGBPUSDC",
         "ETCETH",
         "ETCBTC",
         "MKRUSDT",
-        "MKRBTC",
         "IOTAUSDT",
         "ADAUSDT",
         "XLMUSDT",
         "TRXUSDT",
         "XMRUSDT",
         "EOSUSDT",
-        "DOGEGBP",
-        "BTCEUR",
-        "BTCGBP",
+        "ETHUSDT",
         "BTCUSDT",
     ]
 )
@@ -77,10 +69,10 @@ TYPES = {
     "ignore": np.uint8,
 }
 
-PATH = "data/bin/"
+PATH = "data/bin/monthly/"
 PATH_DAILY = "data/bin/daily/"
 min_time = 1577836800000
-max_time = 1640606400000
+max_time = 1640991600000
 
 
 class BinanceCoinDataset(Dataset):
@@ -88,7 +80,7 @@ class BinanceCoinDataset(Dataset):
         self,
         test=(False, 0.7),
         window_size=1024,
-        y_time_forward=15,
+        y_time_forward=60,
         transform=None,
         target_transform=None,
         currencies=["BTCUSDT", "ADAUSDT", "XMRUSDT"],
@@ -106,9 +98,6 @@ class BinanceCoinDataset(Dataset):
                 for month in range(1, 13, 1):
                     try:
                         file = f"{s}-1m-{year}-{month:02d}.zip"
-                        if file == "DOGEUSDT-1m-2021-01.zip":
-                            print("t")
-                            pass
                         data = pd.read_csv(
                             PATH + f"{s}-1m-{year}-{month:02d}.zip",
                             names=FEATURES,
@@ -119,18 +108,18 @@ class BinanceCoinDataset(Dataset):
                     except FileNotFoundError as error:
                         pass
 
-            for day in range(1, 31, 1):
-                try:
-                    file = f"{s}-1m-2021-12-{day:02d}.zip"
-                    data = pd.read_csv(
-                        PATH_DAILY + file,
-                        names=FEATURES,
-                        dtype=TYPES,
-                    )
-                    data = data[NEEDED_COLUMNS]
-                    currency.append(data)
-                except FileNotFoundError as error:
-                    pass
+            # for day in range(1, 31, 1):
+            #     try:
+            #         file = f"{s}-1m-2021-12-{day:02d}.zip"
+            #         data = pd.read_csv(
+            #             PATH_DAILY + file,
+            #             names=FEATURES,
+            #             dtype=TYPES,
+            #         )
+            #         data = data[NEEDED_COLUMNS]
+            #         currency.append(data)
+            #     except FileNotFoundError as error:
+            #         pass
 
             currency = pd.concat(currency).set_index(["open_timestamp"])
             ys = currency[["close"]]
@@ -182,11 +171,9 @@ class BinanceCoinDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.data.iloc[idx : idx + self.window_size]
 
-        current_price = self.data_y.iloc[idx + self.window_size - 1][
-            self.y_target_columns
-        ]
+        current_price = self.data_y.iloc[idx + self.window_size][self.y_target_columns]
 
-        y = self.data_y.iloc[idx + self.y_time_forward + self.window_size - 1][
+        y = self.data_y.iloc[idx + self.y_time_forward + self.window_size][
             self.y_target_columns
         ]
 

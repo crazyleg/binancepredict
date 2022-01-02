@@ -58,10 +58,10 @@ def run_prediction_loop():
         blocks=6,
     )
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load("ml/models/BSM4_64_6_mse.pth"))
+        net.load_state_dict(torch.load("ml/models/BSM_1h_lin.pth"))
     else:
         net.load_state_dict(
-            torch.load("ml/models/BSM4_64_6_mse.pth", map_location=torch.device("cpu"))
+            torch.load("ml/models/BSM_1h_lin.pth", map_location=torch.device("cpu"))
         )
 
     net.eval()

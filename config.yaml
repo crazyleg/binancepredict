@@ -1,29 +1,21 @@
 binance:
   endpoint: "https://api.binance.com"
 
-
 models:
   resnet:
     symbols:
-        - "DOGEUSDT"
         - "AVAXUSDT"
         - "SOLUSDT"
-        - "SHIBUSDT"
-        - "EURUSDT"
-        - "GBPUSDT"
         - "ETCETH"
         - "ETCBTC"
         - "MKRUSDT"
-        - "MKRBTC"
         - "IOTAUSDT"
         - "ADAUSDT"
         - "XLMUSDT"
         - "TRXUSDT"
         - "XMRUSDT"
         - "EOSUSDT"
-        - "DOGEGBP"
-        - "BTCEUR"
-        - "BTCGBP"
+        - "ETHUSDT"
         - "BTCUSDT"
 
     features:
