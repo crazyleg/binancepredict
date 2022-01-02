@@ -140,7 +140,6 @@ class Trading:
                 TriggerType.LRx4Manualx10,
                 TriggerType.Q_THR,
                 TriggerType.Q_THR_HARD,
-                TriggerType.Q_THR_REVERSED,
             ],
             [
                 self.C_thresholds,
@@ -153,7 +152,6 @@ class Trading:
                 self.just_thresholds10,
                 q_thrs,
                 q_thrs_hard,
-                q_thrs,
             ],
         ):
             tmp_thrs = thrs.copy()
@@ -169,7 +167,6 @@ class Trading:
 
             elif thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
                 predictions = predictions_el.copy()
-
             else:
                 predictions = predictions_nn.numpy().copy()
 
