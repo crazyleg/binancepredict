@@ -106,7 +106,7 @@ def run_prediction_loop():
         # harder check
         q_thrs_with_stats_check = []
         q_thrs_with_stats_check.append({"pair": "dummy", "buy_thr": -1, "sell_thr": -1})
-        for i in range(0, 20):
+        for i in range(0, 13):
             pos_thrs = results_for_lr[returns[:, i] > 0.0025, i]
             neg_thrs = results_for_lr[returns[:, i] < -0.0025, i]
 
