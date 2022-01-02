@@ -169,5 +169,8 @@ for epoch in range(4):  # loop over the dataset multiple times
             torch.save(net.state_dict(), "best_model.pth")
             run["model/saved_model"].upload("best_model.pth")
 
+        torch.save(net.state_dict(), "last_model.pth")
+        run["model/last_model"].upload("last_model.pth")
+
 print("Finished Training")
 run.stop()

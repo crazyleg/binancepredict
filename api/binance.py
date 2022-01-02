@@ -34,7 +34,7 @@ class BinanceAPI:
         return datetime.fromtimestamp(server_time / 1000)
 
     async def get_ticker_data_async(
-        self, session, symbol: str, interval: str = "1m", limit: int = 512
+        self, session, symbol: str, interval: str = "1m", limit: int = 1000
     ) -> TickerStream:
         parameters = {
             "symbol": symbol,

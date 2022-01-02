@@ -39,13 +39,13 @@ def prepare_data(config, data):
 
     x = final_data.values.swapaxes(0, 1).astype(np.float32)
 
-    idx = extract_windows_vectorized(512, 1000 - 512 - 17, 512)
+    idx = extract_windows_vectorized(512, 1000 - 512 - 62, 512)
 
     data_for_lr = final_data.values[idx].swapaxes(1, 2).astype(np.float32)
     column_names = ["close_" + x for x in config["models"]["resnet"]["symbols"]]
 
     prev_price = final_data[column_names].iloc[idx[:, -1]]
-    cur_price = final_data[column_names].iloc[idx[:, -1] + 15]
+    cur_price = final_data[column_names].iloc[idx[:, -1] + 60]
 
     returns = (cur_price.values / prev_price.values) - 1
 

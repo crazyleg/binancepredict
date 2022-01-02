@@ -107,76 +107,31 @@ class Trading:
         # log per-currency and total profits
         # check for double trades!
 
-        self.just_thresholds = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.002, "sell_thr": -0.002}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
-        self.just_thresholds4 = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.004, "sell_thr": -0.004}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
-        self.just_thresholds10 = pd.DataFrame(
-            [
-                {"pair": c, "buy_thr": 0.01, "sell_thr": -0.01}
-                for c in self.cfg["models"]["resnet"]["symbols"]
-            ]
-        )
-
         for thr_type, thrs in zip(
             [
-                TriggerType.NN,
-                TriggerType.LR,
-                TriggerType.LRx3,
-                TriggerType.LRx4,
-                TriggerType.Elastic,
-                TriggerType.LRx4Manual,
-                TriggerType.Elasticx10,
-                TriggerType.LRx4Manualx10,
                 TriggerType.Q_THR,
                 TriggerType.Q_THR_HARD,
             ],
             [
-                self.C_thresholds,
-                self.lr_thresholds,
-                self.lr_thresholds,
-                self.lr_thresholds,
-                self.just_thresholds,
-                self.just_thresholds4,
-                self.just_thresholds10,
-                self.just_thresholds10,
                 q_thrs,
                 q_thrs_hard,
             ],
         ):
             tmp_thrs = thrs.copy()
 
-            if thr_type in [
-                TriggerType.LRx3,
-                TriggerType.LR,
-                TriggerType.LRx4,
-                TriggerType.LRx4Manual,
-                TriggerType.LRx4Manualx10,
-            ]:
-                predictions = predictions_lr.copy()
+            # if thr_type in [
+            #     TriggerType.LRx3,
+            #     TriggerType.LR,
+            #     TriggerType.LRx4,
+            #     TriggerType.LRx4Manual,
+            #     TriggerType.LRx4Manualx10,
+            # ]:
+            #     predictions = predictions_lr.copy()
 
-            elif thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
-                predictions = predictions_el.copy()
-            else:
-                predictions = predictions_nn.numpy().copy()
-
-            if thr_type == TriggerType.LRx3:
-                tmp_thrs.buy_thr *= 3
-                tmp_thrs.sell_thr *= 3
-
-            if thr_type == TriggerType.LRx4:
-                tmp_thrs.buy_thr *= 4
-                tmp_thrs.sell_thr *= 4
+            # elif thr_type in [TriggerType.Elastic, TriggerType.Elasticx10]:
+            #     predictions = predictions_el.copy()
+            # else:
+            predictions = predictions_nn.numpy().copy()
 
             for c, currency in enumerate(self.cfg["models"]["resnet"]["symbols"]):
                 current_price = spot_prices[currency].latest_close_price()

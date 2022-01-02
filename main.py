@@ -107,13 +107,11 @@ def run_prediction_loop():
         q_thrs_with_stats_check = []
         q_thrs_with_stats_check.append({"pair": "dummy", "buy_thr": -1, "sell_thr": -1})
         for i in range(0, 13):
-            pos_thrs = results_for_lr[returns[:, i] > 0.0025, i]
-            neg_thrs = results_for_lr[returns[:, i] < -0.0025, i]
+            pos_thrs = results_for_lr[returns[:, i] > 0.0050, i]
+            neg_thrs = results_for_lr[returns[:, i] < -0.0050, i]
 
-            if (
-                (stats.ttest_ind(pos_thrs, neg_thrs).pvalue < 0.1)
-                and (pos_thrs.median() > neg_thrs.median())
-                and (pos_thrs.mean() > neg_thrs.mean())
+            if (stats.ttest_ind(pos_thrs, neg_thrs).pvalue < 0.2) and (
+                pos_thrs.mean() > neg_thrs.mean()
             ):
                 q_thrs_with_stats_check.append(
                     {
