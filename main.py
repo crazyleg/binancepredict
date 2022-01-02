@@ -54,14 +54,14 @@ def run_prediction_loop():
     net = ResNetBSM4(
         n_features=len(cfg["models"]["resnet"]["symbols"]) * 9,  # TODO magic number
         n_outputs=len(cfg["models"]["resnet"]["symbols"]),
-        filters=64,
+        filters=16,
         blocks=6,
     )
     if torch.cuda.is_available():
-        net.load_state_dict(torch.load("ml/models/BSM_focal.pth"))
+        net.load_state_dict(torch.load("ml/models/BSM_1h.pth"))
     else:
         net.load_state_dict(
-            torch.load("ml/models/BSM_focal.pth", map_location=torch.device("cpu"))
+            torch.load("ml/models/BSM_1h.pth", map_location=torch.device("cpu"))
         )
 
     net.eval()
