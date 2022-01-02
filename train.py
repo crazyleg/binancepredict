@@ -45,30 +45,23 @@ criterion = nn.MSELoss()
 batch_size = 256
 
 C = [
-    "DOGEUSDT",
     "AVAXUSDT",
     "SOLUSDT",
-    "SHIBUSDT",
-    "EURUSDT",
-    "GBPUSDT",
     "ETCETH",
     "ETCBTC",
     "MKRUSDT",
-    "MKRBTC",
     "IOTAUSDT",
     "ADAUSDT",
     "XLMUSDT",
     "TRXUSDT",
     "XMRUSDT",
     "EOSUSDT",
-    "DOGEGBP",
-    "BTCEUR",
-    "BTCGBP",
+    "ETHUSDT",
     "BTCUSDT",
 ]
 
-train_set = BinanceCoinDataset(test=(False, 0.98), window_size=512, currencies=C)
-val_set = BinanceCoinDataset(test=(True, 0.98), window_size=512, currencies=C)
+train_set = BinanceCoinDataset(test=(False, 0.999), window_size=512, currencies=C)
+val_set = BinanceCoinDataset(test=(True, 0.999), window_size=512, currencies=C)
 
 n_features = train_set.data.shape[1]
 net = ResNetBSM4(n_features=n_features, n_outputs=len(train_set.currencies))
@@ -90,7 +83,7 @@ scheduler = ReduceLROnPlateau(optimizer, "min")
 # Generate test sample
 # get timestamp and results -> dump them to the file
 
-for epoch in range(80):  # loop over the dataset multiple times
+for epoch in range(4):  # loop over the dataset multiple times
     net.train()
     running_loss = 0.0
 
