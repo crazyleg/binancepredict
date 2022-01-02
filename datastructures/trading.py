@@ -202,9 +202,7 @@ class Trading:
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.BUY
-                        if thr_type != TriggerType.Q_THR_REVERSED
-                        else Operation.SELL,
+                        type=Operation.BUY,
                         trigger=thr_type,
                         prediction=predictions[0, c],
                         threshold=buy_thr,
@@ -216,9 +214,7 @@ class Trading:
                         timestamp=max_timestamp,
                         currency=currency,
                         entry_price=current_price,
-                        type=Operation.SELL
-                        if thr_type != TriggerType.Q_THR_REVERSED
-                        else Operation.BUY,
+                        type=Operation.SELL,
                         trigger=thr_type,
                         prediction=predictions[0, c],
                         threshold=sell_thr,

@@ -64,6 +64,6 @@ class LogWriter:
             "threshold": trade.threshold,
         }
         logging.info(
-            f"opening the trade on ts: {timestamp} currency: {trade.currency} entry_price: {trade.entry_price}  type: {Operation.BUY} type: {trade.trigger} prediction: {trade.prediction} thr: {trade.threshold}",
+            f"opening the trade on ts: {timestamp} currency: {trade.currency} entry_price: {trade.entry_price}  type: {trade.type} type: {trade.trigger} prediction: {trade.prediction} thr: {trade.threshold}",
             extra=kibana_extra_data,
         )
